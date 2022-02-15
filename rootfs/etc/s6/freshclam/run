@@ -1,0 +1,11 @@
+#!/bin/ash
+set -e
+
+readonly PID_FILE="/run/clamav/freshclam.pid"
+
+[[ -e "$PID_FILE" ]] && rm -v "$PID_FILE"
+
+exec /usr/bin/freshclam --foreground --daemon --pid="$PID_FILE" --checks=24 >/dev/null
+
+# vim: set ft=bash ts=2 sts=2 expandtab:
+

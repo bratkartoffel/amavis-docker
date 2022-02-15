@@ -1,0 +1,16 @@
+#!/bin/ash
+set -e
+
+readonly PID_FILE="/run/clamav/clamd.pid"
+
+[[ -e "$PID_FILE" ]] && rm -v "$PID_FILE"
+
+# wait for freshclam to run once
+while [[ ! -e /var/lib/clamav/main.cvd ]]; do
+  sleep 10
+done
+
+exec /usr/sbin/clamd --foreground  >/dev/null
+
+# vim: set ft=bash ts=2 sts=2 expandtab:
+

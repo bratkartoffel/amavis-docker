@@ -1,0 +1,10 @@
+#!/bin/ash
+set -e
+
+# only update once an hour
+if [[ -n "$(ls /var/lib/spamassassin)" ]]; then sleep 1h; fi
+
+exec /usr/bin/sa-update --verbose
+
+# vim: set ft=bash ts=2 sts=2 expandtab:
+
