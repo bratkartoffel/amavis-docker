@@ -12,5 +12,14 @@ RUN apk upgrade --no-cache \
 # add the custom configurations
 COPY rootfs/ /
 
+# quarantine folder for mails
+VOLUME /var/amavis/quarantine
+
+# spamassassin rules (cache them)
+VOLUME /var/amavis/.spamassassin
+
+# razor identity
+VOLUME /var/amavis/.razor
+
 CMD [ "/entrypoint.sh" ]
 

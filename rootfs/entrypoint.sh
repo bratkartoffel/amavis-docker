@@ -19,7 +19,7 @@ set -o errexit -o pipefail
 : "${APP_SPAMASSASSIN_HOME_DIR:=/var/lib/spamassassin}"
 
 # export configuration
-export APP_UMASK APP_UID APP_GID APP_USER APP_GROUP APP_HOME APP_CONF APP_EXTRA_CONF APP_CLAMAV_CONF_DIR APP_CLAMAV_HOME_DIR APP_CLAMAV_LOG_DIR APP_SPAMASSASSIN_CONF_DIR APP_SPAMASSASSIN_HOME_DIR
+export APP_CONF APP_EXTRA_CONF
 
 # invoked as root, add user and prepare container
 if [ "$(id -u)" -eq 0 ]; then
@@ -35,18 +35,24 @@ if [ "$(id -u)" -eq 0 ]; then
   addgroup -g "$APP_GID" "$APP_GROUP"
   adduser -HD -h "$APP_HOME" -s /sbin/nologin -G "$APP_GROUP" -u "$APP_UID" -k /dev/null "$APP_USER"
 
-  echo ">> fixing owner of $APP_HOME, $APP_CONF, $APP_CLAMAV_CONF_DIR"
-  install -dm 0750 -o "$APP_USER" -g "$APP_GROUP" /run/clamav
-  install -dm 0750 -o "$APP_USER" -g "$APP_GROUP" "$APP_HOME"
-  chown -R "$APP_USER":"$APP_GROUP" "$APP_HOME" "$APP_CLAMAV_CONF_DIR" "$APP_CLAMAV_HOME_DIR" "$APP_SPAMASSASSIN_CONF_DIR" "$APP_SPAMASSASSIN_HOME_DIR" "$APP_CLAMAV_LOG_DIR" /etc/s6
-  chown root:"$APP_GROUP" "$APP_CONF" 
-  [[ -e "$APP_EXTRA_CONF" ]] && chown root:"$APP_GROUP" "$APP_EXTRA_CONF"
-
-  if [[ ! -e /var/amavis/.razor/identity ]]; then
+  if [[ ! -e "$APP_HOME"/.razor/identity ]]; then
     echo ">> create razor identity"
-    razor-admin -create
-    razor-admin -register
+    razor-admin -home="$APP_HOME"/.razor -create
+    razor-admin -home="$APP_HOME"/.razor -register
   fi
+
+  echo ">> fixing permissions"
+  install -dm 0750 -o "$APP_USER" -g "$APP_GROUP" "$APP_HOME" /run/clamav
+  chown -R "$APP_USER":"$APP_GROUP" \
+          "$APP_HOME" \
+          "$APP_CLAMAV_CONF_DIR" \
+          "$APP_CLAMAV_HOME_DIR" \
+          "$APP_SPAMASSASSIN_CONF_DIR" \
+          "$APP_SPAMASSASSIN_HOME_DIR" \
+          "$APP_CLAMAV_LOG_DIR" \
+          /etc/s6
+  chown root:"$APP_GROUP" "$APP_CONF"
+  [[ -e "$APP_EXTRA_CONF" ]] && chown root:"$APP_GROUP" "$APP_EXTRA_CONF"
 
   echo ">> create link for syslog redirection"
   install -dm 0750 -o "$APP_USER" -g "$APP_GROUP" /run/syslogd
